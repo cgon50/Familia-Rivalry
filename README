@@ -5,6 +5,12 @@ Group Members:
 Zac May, zsm334, zmay@utexas.edu
 Christian Gonzalez, cag5242, chgon98@gmail.com
 
+Possible leads:
+   Generate questions using script that utilizes autocomplete api
+   
+   P2P wifi connection api
+      https://developer.android.com/training/connect-devices-wirelessly/wifi-direct
+
 What sort of app are we building? What will be the major subsystems? What will be the major challenges? 
 This app will function similar to family feud. It will have a user login and questions we likely create with answers pulled from the google autocomplete API. The answers will be the top suggested queries with a given search prefix. We will also have multiplayer so you can challenge your nearby friends. Multiplayer, and either creating questions or finding a way to scrape actual family feud questions, will be the trickiest portion of the project.
 
