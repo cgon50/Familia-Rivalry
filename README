@@ -1,0 +1,34 @@
+Title
+Familia Rivalry
+
+Group Members:
+Zac May, zsm334, zmay@utexas.edu
+Christian Gonzalez, cag5242, chgon98@gmail.com
+
+What sort of app are we building? What will be the major subsystems? What will be the major challenges? 
+This app will function similar to family feud. It will have a user login and questions we likely create with answers pulled from the google autocomplete API. The answers will be the top suggested queries with a given search prefix. We will also have multiplayer so you can challenge your nearby friends. Multiplayer, and either creating questions or finding a way to scrape actual family feud questions, will be the trickiest portion of the project.
+
+Major UI elements:
+
+   
+
+Week by week schedule:
+Week 1: Layout
+Week 2: Question creation / scraping
+Week 3: Game Logic
+Week 4: Authentication / Multiplayer
+Week 5:  Multiplayer
+Week 6: Polish UI, attempt voice to text.
+
+APIs
+RealTimeMultiplayerClient
+GoogleSignInAccount / FirebaseAuth
+Possibly SpeechRecognizer
+Google Autocomplete API
+
+Deliverable:
+We will demo our working app, where we will play a couple rounds to showcase the different paths that our app can take, and how it handles. 
+
+Inspiration:
+This will be a crossover of family feud and google feud. It will take the competitive format of family feud and use the same methods of drawing questions as google feud does.
+
