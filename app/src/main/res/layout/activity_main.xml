@@ -97,6 +97,7 @@
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:textColor="#000000"
             />
         <TextView
             android:text="5"
@@ -107,6 +108,7 @@
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:textColor="#000000"
             />
     </LinearLayout>
     <LinearLayout
@@ -126,6 +128,7 @@
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:textColor="#000000"
             />
         <TextView
             android:text="6"
@@ -136,6 +139,7 @@
             android:layout_margin="2dp"
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:textColor="#000000"
             />
     </LinearLayout>
     <LinearLayout
@@ -155,6 +159,7 @@
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:textColor="#000000"
             />
         <TextView
             android:text="7"
@@ -165,6 +170,7 @@
             android:layout_margin="2dp"
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:textColor="#000000"
             />
     </LinearLayout>
     <LinearLayout
@@ -184,6 +190,7 @@
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:textColor="#000000"
             />
         <TextView
             android:text="8"
@@ -194,6 +201,7 @@
             android:layout_margin="2dp"
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:textColor="#000000"
             />
     </LinearLayout>
     <LinearLayout
@@ -216,6 +224,7 @@
             android:padding="5dp" >
 
             <TextView
+                android:id="@+id/strike1TV"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="#FFFFFF"
@@ -235,6 +244,7 @@
             android:padding="5dp" >
 
             <TextView
+                android:id="@+id/strike2TV"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="#FFFFFF"
@@ -253,6 +263,7 @@
             android:padding="5dp" >
 
             <TextView
+                android:id="@+id/strike3TV"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="#FFFFFF"
@@ -269,6 +280,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <TextView
+            android:id="@+id/questionTV"
             android:textSize="32dp"
             android:gravity="center"
             android:layout_margin="10dp"
