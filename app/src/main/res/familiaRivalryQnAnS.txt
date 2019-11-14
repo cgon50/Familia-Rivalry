@@ -235,7 +235,7 @@ How many pairs of socks does a fast food worker wear in one week?
 5
 5
 3
-Name another word for &quot;book.&quot;
+Name another word for "book."
  
 Novel
 55
@@ -322,7 +322,7 @@ Sana Stark
 2
 Ned Stark
 2
-How long is an &quot;unbearable&quot; commute?
+How long is an "unbearable" commute?
  
 1 hour
 41
@@ -433,7 +433,7 @@ Brush teeth
 7
 Get dressed
 2
-Name a U.S. President who might have been described during his time in office as a &quot;young&quot; president.
+Name a U.S. President who might have been described during his time in office as a "young" president.
  
 Kennedy
 41
@@ -554,7 +554,7 @@ Hummer
 2
 Limo
 2
-Name a part of your body that you might say has an &quot;ache&quot;.
+Name a part of your body that you might say has an "ache".
  
 Head
 34
