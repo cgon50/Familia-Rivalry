@@ -30,6 +30,7 @@ class MainActivity : AppCompatActivity() {
     private var strikes = 0
     private var score = 0
     private var roundNumber = 0
+    private var numAnswersGuessed = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,7 +45,7 @@ class MainActivity : AppCompatActivity() {
         questionBank = mutableListOf()
         answerBank = mutableListOf()
         answerScoresBank = mutableListOf()
-        randomForRound = Random(15)
+        randomForRound = Random(1)
         
         var isNotScore = true
         for (i in 2 until unfilteredLines.size) {
@@ -101,6 +102,8 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
+        answerET.text.clear()
+
         guessBut.setOnClickListener {
             performGuess()
         }
@@ -109,6 +112,7 @@ class MainActivity : AppCompatActivity() {
         roundTV.text = "Round $roundNumber"
 
         score = 0
+        numAnswersGuessed = 0
 
         strikeViews.forEach { it.text = "" }
         strikes = 0
@@ -162,7 +166,10 @@ class MainActivity : AppCompatActivity() {
         else {
             if (answersGuessed[correctGuessNumber - 1] == 0) {
                 answersGuessed[correctGuessNumber - 1] = 1
+                numAnswersGuessed++
                 revealAnswer(correctGuessNumber)
+                if (numAnswersGuessed == answers.size)
+                    endGame()
             }
             else
                 doStrike()
@@ -179,8 +186,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun endGame() {
-        guessBut.setOnClickListener { hideKeyboard() }
+        guessBut.setOnClickListener {
+            answerET.text.clear()
+            hideKeyboard()
+        }
         answerET.setOnEditorActionListener { _, _, _ ->
+            answerET.text.clear()
             hideKeyboard()
             true
         }
