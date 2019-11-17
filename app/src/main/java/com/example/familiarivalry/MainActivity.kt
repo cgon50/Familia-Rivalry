@@ -9,7 +9,10 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
+import java.util.*
+import kotlin.concurrent.schedule
 import kotlin.math.min
+import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
 
@@ -22,8 +25,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var questionBank: List<String>
     private lateinit var answerBank: List<List<String>>
     private lateinit var answerScoresBank: List<List<Int>>
+    private lateinit var randomForRound: Random
+    private lateinit var answersGuessed: MutableList<Int>
     private var strikes = 0
     private var score = 0
+    private var roundNumber = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,17 +44,14 @@ class MainActivity : AppCompatActivity() {
         questionBank = mutableListOf()
         answerBank = mutableListOf()
         answerScoresBank = mutableListOf()
+        randomForRound = Random(15)
         
         var isNotScore = true
         for (i in 2 until unfilteredLines.size) {
             var curString = unfilteredLines[i]
             var curInt = curString.toIntOrNull()
             if (curString == " ") {
-                (questionBank as MutableList<String>).add(questionString)
-                answers.removeAt(answers.size - 1)
-                (answerBank as MutableList<List<String>>).add(answers)
-                (answerScoresBank as MutableList<List<Int>>).add(answerScores)
-
+                addQuestion(questionString, answers, answerScores)
                 answers = mutableListOf()
                 answerScores = mutableListOf()
 
@@ -56,28 +59,40 @@ class MainActivity : AppCompatActivity() {
                 isNotScore = true
             }
             else if (isNotScore) {
-                answers.add(curString)
+                    answers.add(curString)
                 isNotScore = false
             }
             else {
-                if (curInt != null)
+                if (curInt != null) {
                     answerScores.add(curInt)
+                }
                 isNotScore = true
             }
             
         }
 
-        (questionBank as MutableList<String>).add(questionString)
-        (answerBank as MutableList<List<String>>).add(answers)
-        (answerScoresBank as MutableList<List<Int>>).add(answerScores)
+        addQuestion(questionString, answers, answerScores)
 
         board = mutableListOf(answer1, answer2, answer3, answer4, answer5, answer6, answer7, answer8)
         strikeViews = mutableListOf(strike1TV, strike2TV, strike3TV)
 
-        playRound()
+        playRound(randomForRound.nextInt(0, questionBank.size - 1))
     }
 
-    private fun playRound() {
+    private fun addQuestion (questionString: String, answers: MutableList<String>, answerScores: MutableList<Int>) {
+        (questionBank as MutableList<String>).add(questionString)
+        answers.removeAt(answers.size - 1)
+        while (answers.size > 8) {
+            answers.removeAt(answers.size - 1)
+        }
+        while (answerScores.size > 8) {
+            answerScores.removeAt(answerScores.size - 1)
+        }
+        (answerBank as MutableList<List<String>>).add(answers)
+        (answerScoresBank as MutableList<List<Int>>).add(answerScores)
+    }
+
+    private fun playRound(questionNumber: Int) {
 
         answerET.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
@@ -90,18 +105,25 @@ class MainActivity : AppCompatActivity() {
             performGuess()
         }
 
+        roundNumber++
+        roundTV.text = "Round $roundNumber"
+
         score = 0
 
         strikeViews.forEach { it.text = "" }
         strikes = 0
 
-        question = "What is your favorite vowel?"
+        question = questionBank[questionNumber]
         questionTV.text = "$question"
-        answers = mutableListOf("a", "e", "it is i", "o", "raw shrimp", "raw chicken")
+        answers = answerBank[questionNumber]
         answerSets = mutableListOf()
-        answers.forEach { (answerSets as MutableList<Set<String>>).add(it.split(" ").toHashSet()) }
+        answersGuessed = mutableListOf()
+        answers.forEach {
+            (answerSets as MutableList<Set<String>>).add(it.toLowerCase().split(" ").toHashSet())
+            answersGuessed.add(0)
+        }
 
-        answerScores = mutableListOf(20, 15, 10, 8, 8, 5)
+        answerScores = answerScoresBank[questionNumber]
 
         for (i in 1..answers.size) {
             board[i - 1].text = "$i"
@@ -113,7 +135,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun performGuess() {
         hideKeyboard()
-        var guess = answerET.text.toString()
+        var guess = answerET.text.toString().toLowerCase()
+        answerET.text.clear()
+        if (guess.isNullOrBlank())
+            return
         var guessSet = guess.split(" ").toHashSet()
         //newlines not possible in this, and if they mess up their guess w other stuff oh well.
         var correctGuessNumber = -1
@@ -135,7 +160,12 @@ class MainActivity : AppCompatActivity() {
             doStrike()
         }
         else {
-            revealAnswer(correctGuessNumber)
+            if (answersGuessed[correctGuessNumber - 1] == 0) {
+                answersGuessed[correctGuessNumber - 1] = 1
+                revealAnswer(correctGuessNumber)
+            }
+            else
+                doStrike()
         }
 
     }
@@ -157,6 +187,17 @@ class MainActivity : AppCompatActivity() {
         val newScore = Integer.parseInt(p1ScoreTV.text.toString()) + score
 
         p1ScoreTV.text = "$newScore"
+        answers.forEachIndexed { index, _ ->
+            revealAnswer(index + 1)
+        }
+
+        Timer("newRound", false).schedule(
+            object : TimerTask() {
+                override fun run() {
+                    runOnUiThread{ playRound(randomForRound.nextInt(0, questionBank.size - 1)) }
+                }
+            } , 6000)
+
 
     }
 
