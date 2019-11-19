@@ -7,9 +7,13 @@ Christian Gonzalez, cag5242, chgon98@gmail.com
 
 Possible leads:
    Generate questions using script that utilizes autocomplete api
+   ^^Above scrapped in favor of scraping a website for questions and answers using a js script
    
    P2P wifi connection api
       https://developer.android.com/training/connect-devices-wirelessly/wifi-direct
+      
+   Convenience wrapper for wifi direct
+      https://github.com/cubesky/EasyWifiP2P
 
 What sort of app are we building? What will be the major subsystems? What will be the major challenges? 
 This app will function similar to family feud. It will have a user login and questions we likely create with answers pulled from the google autocomplete API. The answers will be the top suggested queries with a given search prefix. We will also have multiplayer so you can challenge your nearby friends. Multiplayer, and either creating questions or finding a way to scrape actual family feud questions, will be the trickiest portion of the project.
@@ -19,9 +23,9 @@ Major UI elements:
    
 
 Week by week schedule:
-Week 1: Layout
-Week 2: Question creation / scraping
-Week 3: Game Logic
+Week 1: Layout - done
+Week 2: Question creation / scraping - done
+Week 3: Game Logic - done for single player 
 Week 4: Authentication / Multiplayer
 Week 5:  Multiplayer
 Week 6: Polish UI, attempt voice to text.
