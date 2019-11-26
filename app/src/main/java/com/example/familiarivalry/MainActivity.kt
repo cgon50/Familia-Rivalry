@@ -30,9 +30,11 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        gameFragment = GameFragment.newInstance()
-        peerFragment = P2pFragment.newInstance()
+//        gameFragment = GameFragment.newInstance()
+//        peerFragment = P2pFragment.newInstance()
         homeFragment = HomeFragment.newInstance()
+        WifiP2PHelper.requestPermission(this)
+
         // Set up the initial fragment
         supportFragmentManager
             .beginTransaction()
