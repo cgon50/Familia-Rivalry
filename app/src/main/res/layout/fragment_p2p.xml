@@ -5,9 +5,15 @@
     android:layout_height="match_parent"
     tools:context=".P2pFragment">
 
-    <ListView
-        android:id="@+id/peerList"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="wrap_content"
+        android:id="@+id/refresh" >
+
+        <ListView
+            android:id="@+id/peerList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </FrameLayout>

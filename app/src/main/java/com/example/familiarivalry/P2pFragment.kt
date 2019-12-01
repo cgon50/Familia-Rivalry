@@ -9,7 +9,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.ListView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import party.liyin.easywifip2p.WifiP2PHelper
+import java.util.*
 
 /**
  * A simple [Fragment] subclass.
@@ -22,6 +24,7 @@ import party.liyin.easywifip2p.WifiP2PHelper
 class P2pFragment : Fragment() {
     private lateinit var helper: WifiP2PHelper
     private lateinit var listView: ListView
+    private var devices = mutableListOf<WifiP2pDevice>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,19 +40,20 @@ class P2pFragment : Fragment() {
         helper = WifiP2PHelper(context)
         helper.requestConnInfo()
         listView = p2pView.findViewById<ListView>(R.id.peerList)
-        listView.setOnItemClickListener { parent,_,position,_ ->
-            val item = parent.getItemAtPosition(position) as WifiP2pDevice
-            helper.connectToPeer(item)
+        listView.setOnItemClickListener { _,_,position,_ ->
+            helper.connectToPeer(devices[position])
         }
         helper.setConnectInfoListener { address, isGroupOwner, groupFormed ->
             Log.d("ASDF","ASDF")
-            println("========\nAddress:$address\nisGroupOwner:$isGroupOwner\ngroupFormed:$groupFormed\n========")
+            Log.d("info", "========\nAddress:$address\nisGroupOwner:$isGroupOwner\ngroupFormed:$groupFormed\n========")
         }
         helper.setConnectListener(object : WifiP2PHelper.ConnectListener{
 
             override fun connectState(state: Boolean) {
                 Log.d("ASDF","CONNECTSTATE")
+                helper.requestConnInfo()
                 println("Connect State: $state")
+                //if state is true, start game :)
             }
 
             override fun connectDone(state: Boolean) {
@@ -60,10 +64,26 @@ class P2pFragment : Fragment() {
         })
         helper.setPeerListener {
             Log.d("ASDF","LISTENER")
-            if (it != null)
-                listView.adapter = ArrayAdapter<WifiP2pDevice>(context!!, android.R.layout.simple_expandable_list_item_1, it)
+            if (it != null) {
+                devices = it
+                var names = mutableListOf<String>()
+                for (device in devices) {
+                    names.add(device.deviceName)
+                }
+                listView.adapter = ArrayAdapter<String>(context!!, android.R.layout.simple_expandable_list_item_1, names)
+            }
+            it.forEach({})
         }
+        p2pView.findViewById<SwipeRefreshLayout>(R.id.refresh).setOnRefreshListener {
+            helper.startDiscovery()
+            Timer("stopRefresh", false).schedule(
+                object : TimerTask() {
+                    override fun run() {
+                        activity!!.runOnUiThread{ p2pView.findViewById<SwipeRefreshLayout>(R.id.refresh).isRefreshing = false }
+                    }
+                } , 1000)
 
+        }
         helper.easyStart()
         helper.startDiscovery()
 
