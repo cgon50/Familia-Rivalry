@@ -2,30 +2,17 @@ package com.example.familiarivalry
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.View
-import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
-import android.widget.TextView
-import kotlinx.android.synthetic.main.activity_main.*
-import java.io.File
-import java.util.*
-import kotlin.concurrent.schedule
-import kotlin.math.min
-import kotlin.random.Random
-import androidx.core.app.ComponentActivity
-import androidx.core.app.ComponentActivity.ExtraData
-import androidx.core.content.ContextCompat.getSystemService
-import android.icu.lang.UCharacter.GraphemeClusterBreak.T
-import android.net.wifi.p2p.WifiP2pDevice
+import androidx.appcompat.app.AlertDialog
 import party.liyin.easywifip2p.WifiP2PHelper
 
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var gameFragment: GameFragment
-    private lateinit var peerFragment:P2pFragment
-    private lateinit var homeFragment:HomeFragment
+    private lateinit var peerFragment: P2pFragment
+    private lateinit var homeFragment: HomeFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,6 +29,14 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
+    override fun onBackPressed() {
+        AlertDialog.Builder(this)
+            .setMessage("Are you sure you want to exit?\nYou will not be able to return to the game.")
+            .setCancelable(false)
+            .setPositiveButton("Yes") { _, _ -> super@MainActivity.onBackPressed() }
+            .setNegativeButton("No", null)
+            .show()
+    }
 
     fun hideKeyboard() {
         val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
