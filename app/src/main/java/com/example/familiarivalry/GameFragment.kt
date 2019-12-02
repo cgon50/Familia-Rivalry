@@ -2,6 +2,7 @@ package com.example.familiarivalry
 
 import android.content.Context
 import android.content.Context.INPUT_METHOD_SERVICE
+import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -47,6 +48,8 @@ class GameFragment : Fragment() {
     private var score = 0
     private var roundNumber = 0
     private var numAnswersGuessed = 0
+    private var player = MediaPlayer()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,6 +74,8 @@ class GameFragment : Fragment() {
         answerBank = mutableListOf()
         answerScoresBank = mutableListOf()
         randomForRound = Random(1)
+        player = MediaPlayer.create(context, R.raw.wrong_answer_buzzer)
+
         var isNotScore = true
         for (i in 2 until unfilteredLines.size) {
             var curString = unfilteredLines[i]
@@ -216,8 +221,14 @@ class GameFragment : Fragment() {
     private fun doStrike() {
         strikeViews[strikes].text = "X"
         strikes++
+        player.start()
         if (strikes == 3) {
             endGame()
+        }
+        player.setOnCompletionListener {
+            player.stop()
+            player.reset()
+            player = MediaPlayer.create(context, R.raw.wrong_answer_buzzer)
         }
     }
 

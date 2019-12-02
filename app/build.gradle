@@ -42,4 +42,6 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
     implementation 'party.liyin:easywifip2p:2.3'
     implementation 'party.liyin:easywifip2p:2.3@aar'
+
+    implementation 'party.liyin:socketchannel:8.8'
 }
