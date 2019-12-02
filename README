@@ -9,6 +9,10 @@ Possible leads:
    Generate questions using script that utilizes autocomplete api
    ^^Above scrapped in favor of scraping a website for questions and answers using a js script
    
+   Regular Socket Connection Example:
+      https://stackoverflow.com/questions/56535473/how-to-send-and-receive-strings-through-tcp-connection-using-kotlin
+      Group leader & not both have servers running on different ports to accept messages from client (other device)
+   
    P2P wifi connection api
       https://developer.android.com/training/connect-devices-wirelessly/wifi-direct
       
