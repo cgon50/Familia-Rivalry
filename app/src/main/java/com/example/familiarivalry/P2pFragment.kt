@@ -11,8 +11,14 @@ import android.widget.ArrayAdapter
 import android.widget.ListView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import party.liyin.easywifip2p.WifiP2PHelper
-import java.nio.channels.SocketChannel
 import java.util.*
+
+import java.net.*
+import android.os.StrictMode
+import android.widget.TextView
+import kotlinx.android.synthetic.main.fragment_p2p.*
+import kotlin.collections.ArrayList
+
 
 /**
  * A simple [Fragment] subclass.
@@ -25,6 +31,7 @@ import java.util.*
 class P2pFragment : Fragment() {
     private lateinit var helper: WifiP2PHelper
     private lateinit var listView: ListView
+    private var isGroupOwner = false
     private var devices = mutableListOf<WifiP2pDevice>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,22 +46,54 @@ class P2pFragment : Fragment() {
         var p2pView = inflater.inflate(R.layout.fragment_p2p, container, false)
         Log.d("ASDF","CREATION")
         helper = WifiP2PHelper(context)
+        helper.disconnectAll()
         helper.requestConnInfo()
         listView = p2pView.findViewById<ListView>(R.id.peerList)
         listView.setOnItemClickListener { _,_,position,_ ->
             helper.connectToPeer(devices[position])
         }
-        helper.setConnectInfoListener { address, isGroupOwner, groupFormed ->
+        // TODO CHANGE THIS!! PERF ISSUES
+        val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
+        StrictMode.setThreadPolicy(policy)
+        helper.setConnectInfoListener { address, isGroupOwner , groupFormed ->
             Log.d("ASDF","ASDF")
             Log.d("info", "========\nAddress:$address\nisGroupOwner:$isGroupOwner\ngroupFormed:$groupFormed\n========")
+            if(isGroupOwner != null && groupFormed) {
+                if(isGroupOwner) {
+                    //  we are the player 1!
+                    val server = ServerSocket(9981)
+
+                    println("Server running on port ${server.localPort}")
+                    println(server.localSocketAddress)
+                    val client = server.accept()
+                    println("Client connected : ${client.inetAddress.hostAddress}")
+                    // somehow waits for player 2 to connect and send a message
+                    val scanner = Scanner(client.inputStream)
+                    while (scanner.hasNextLine()) {
+                        p2pView.findViewById<TextView>(R.id.communicate).text = scanner.nextLine()
+                        break
+                    }
+                    server.close()
+                } else {
+                    // we are player 2!
+                    val client = Socket("192.168.49.1", 9981)
+                    client.outputStream.write("Hello from the client!".toByteArray())
+                    client.close()
+                }
+            }
         }
         helper.setConnectListener(object : WifiP2PHelper.ConnectListener{
 
             override fun connectState(state: Boolean) {
                 Log.d("ASDF","CONNECTSTATE")
-                helper.requestConnInfo()
                 println("Connect State: $state")
-                //if state is true, start game :)
+                if(state) {
+                    listView.adapter = ArrayAdapter<String>(context!!, android.R.layout.simple_expandable_list_item_1,
+                        java.util.ArrayList())
+                    helper.requestConnInfo()
+                    //if state is true, start game :)
+
+                }
             }
 
             override fun connectDone(state: Boolean) {
@@ -90,6 +129,15 @@ class P2pFragment : Fragment() {
 
 //        helper.requestConnInfo()
         return p2pView
+    }
+
+    fun getIpv4HostAddress(): String {
+        NetworkInterface.getNetworkInterfaces()?.toList()?.map { networkInterface ->
+            networkInterface.inetAddresses?.toList()?.find {
+                !it.isLoopbackAddress && it is Inet4Address
+            }?.let { return it.hostAddress }
+        }
+        return ""
     }
 
     companion object {
