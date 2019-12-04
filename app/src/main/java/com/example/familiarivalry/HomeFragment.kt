@@ -24,7 +24,7 @@ class HomeFragment : Fragment() {
         homeView.findViewById<Button>(R.id.game).setOnClickListener {
             fragmentManager?.beginTransaction()
                 ?.addToBackStack("backToHomeFromSingle")
-                ?.replace(R.id.main_frame, GameFragment.newInstance())
+                ?.replace(R.id.main_frame, GameFragment.newInstance(myTurn = true, singlePlayer = true, playerOne = true))
                 ?.commit()
         }
         homeView.findViewById<Button>(R.id.p2p).setOnClickListener {

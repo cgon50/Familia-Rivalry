@@ -16,9 +16,6 @@ import java.util.*
 import java.net.*
 import android.os.StrictMode
 import android.widget.TextView
-import kotlinx.android.synthetic.main.fragment_p2p.*
-import kotlin.collections.ArrayList
-
 
 /**
  * A simple [Fragment] subclass.
@@ -73,11 +70,43 @@ class P2pFragment : Fragment() {
                         p2pView.findViewById<TextView>(R.id.communicate).text = scanner.nextLine()
                         break
                     }
+
+//                    client.outputStream.write("Hello from ur dad lol".toByteArray())
+//                    client.outputStream.flush()
+//                    client.getOutputStream().write("Response from the server!".toByteArray())
+//                    fragmentManager?.beginTransaction()
+//                        ?.addToBackStack("backToHomeFromSingle")
+//                        // We have the host as player 1.
+//                        ?.replace(R.id.main_frame, GameFragment.newInstance(myTurn = true, singlePlayer = false, playerOne = true))
+//                        ?.commit()
+
                     server.close()
                 } else {
                     // we are player 2!
-                    val client = Socket("192.168.49.1", 9981)
+                    Log.d("192.168.49.1", address)
+                    Log.d("EQUIVALENT??", "192.168.49.1".equals(address).toString())
+                    val client = Socket(address, 9981)
                     client.outputStream.write("Hello from the client!".toByteArray())
+                    client.outputStream.flush()
+
+                    // somehow waits for player 2 to connect and send a message
+//                    val scanner = Scanner(client.inputStream)
+//                    while (scanner.hasNextLine()) {
+//                        p2pView.findViewById<TextView>(R.id.communicate).text = scanner.nextLine()
+//                        break
+//                    }
+
+
+//                    val scanner = Scanner(client.getInputStream())
+//                    while (scanner.hasNextLine()) {
+//                        p2pView.findViewById<TextView>(R.id.communicate).text = scanner.nextLine()
+//                        break
+//                    }
+//                    fragmentManager?.beginTransaction()
+//                        ?.addToBackStack("backToHomeFromSingle")
+//                        // We have the host as player 1.
+//                        ?.replace(R.id.main_frame, GameFragment.newInstance(myTurn = false, singlePlayer = false, playerOne = false))
+//                        ?.commit()
                     client.close()
                 }
             }

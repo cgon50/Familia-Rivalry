@@ -1,9 +1,6 @@
 package com.example.familiarivalry
 
-import android.content.Context
-import android.content.Context.INPUT_METHOD_SERVICE
 import android.media.MediaPlayer
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -11,16 +8,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
-import androidx.core.content.ContextCompat.getSystemService
+import android.widget.Toast
 import kotlin.random.Random
 import kotlinx.android.synthetic.main.fragment_game.*
 import party.liyin.easywifip2p.WifiP2PHelper
 import java.util.*
 import kotlin.math.min
-
-
 
 /**
  * A simple [Fragment] subclass.
@@ -49,11 +43,24 @@ class GameFragment : Fragment() {
     private var roundNumber = 0
     private var numAnswersGuessed = 0
     private var player = MediaPlayer()
-
+    private var singlePlayer = true
+    private var myTurn = true
+    private var player1 = true
+    private var player1RoundWinner = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val turn = savedInstanceState?.getBoolean(MY_TURN_BOOL_STRING)
+        if (turn != null)
+            myTurn = turn
 
+        val single = savedInstanceState?.getBoolean(SINGLE_PLAYER_BOOL_STRING)
+        if (single != null)
+            singlePlayer = single
+
+        val playerOne = savedInstanceState?.getBoolean(PLAYER_ONE_BOOL_STRING)
+        if (playerOne != null)
+            player1 = playerOne
     }
 
     override fun onCreateView(
@@ -135,19 +142,6 @@ class GameFragment : Fragment() {
 
     private fun playRound(questionNumber: Int) {
 
-        answerET.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                this.performGuess()
-            }
-            true
-        }
-
-        answerET.text.clear()
-
-        guessBut.setOnClickListener {
-            performGuess()
-        }
-
         roundNumber++
         roundTV.text = "Round $roundNumber"
 
@@ -175,17 +169,23 @@ class GameFragment : Fragment() {
         for (i in answers.size until board.size) {
             board[i].text = ""
         }
-
+        if (myTurn)
+            enableGuessing(steal = false)
+        else {
+            disableGuessing()
+            waitForOpponentGuess(steal = false)
+        }
     }
 
-    private fun performGuess() {
-        hideKeyboard()
-        var guess = answerET.text.toString().toLowerCase()
-        answerET.text.clear()
+    private fun performGuess(guess: String, steal: Boolean) {
+
         if (guess.isNullOrBlank())
             return
+        if (!singlePlayer && myTurn)
+            sendGuessToOtherDevice(guess)
+
         var guessSet = guess.split(" ").toHashSet()
-//newlines not possible in this, and if they mess up their guess w other stuff oh well.
+        //newlines not possible in this, and if they mess up their guess w other stuff oh well.
         var correctGuessNumber = -1
         val numWordsInGuess = guessSet.size
         for (i in 1..answerSets.size) {
@@ -202,66 +202,157 @@ class GameFragment : Fragment() {
         }
 
         if (correctGuessNumber == -1) {
-            doStrike()
+            doStrike(guess, steal)
         }
         else {
             if (answersGuessed[correctGuessNumber - 1] == 0) {
                 answersGuessed[correctGuessNumber - 1] = 1
                 numAnswersGuessed++
-                revealAnswer(correctGuessNumber)
-                if (numAnswersGuessed == answers.size)
-                    endGame()
+                revealAnswer(correctGuessNumber, steal)
+                if (steal) {
+                    player1RoundWinner = (player1 && myTurn) || (!player1 && !myTurn)
+                    endGame(false) // end the game for real, he stole it!
+                }
+                else if (numAnswersGuessed == answers.size)
+                    endGame(steal = false) //no chance to steal
+                else {
+                    if (!myTurn)
+                        waitForOpponentGuess(false) //Game still going, gotta wait for next guess.
+                }
             }
             else
-                doStrike()
+                doStrike(guess, steal)
         }
 
     }
 
-    private fun doStrike() {
-        strikeViews[strikes].text = "X"
-        strikes++
+    private fun doStrike(guess: String, steal: Boolean) {
         player.start()
-        if (strikes == 3) {
-            endGame()
-        }
         player.setOnCompletionListener {
             player.stop()
             player.reset()
             player = MediaPlayer.create(context, R.raw.wrong_answer_buzzer)
         }
+        if (!myTurn) {
+            //Let the waiting player know of the wrong guess
+            Toast.makeText(context, "$guess is not correct!", Toast.LENGTH_LONG).show()
+        }
+        if (steal) {
+            player1RoundWinner = (player1 && !myTurn) || (!player1 && myTurn)
+            myTurn = !myTurn // winner goes first next round.
+            endGame(steal = false)
+        }
+        else {
+            strikeViews[strikes].text = "X"
+            strikes++
+            if (strikes == 3) {
+                endGame(steal = !singlePlayer) //only steal in a multiplayer match
+            }
+            else if (!myTurn) {
+                //Game is still going, wait for the next guess!
+                waitForOpponentGuess(steal = false)
+            }
+        }
+
     }
 
-    private fun endGame() {
+    fun sendGuessToOtherDevice(guess: String) {
+        //logic to send message to other device
+        Log.d("SENT", "$guess sent to opponent")
+    }
+
+    fun waitForOpponentGuess(steal: Boolean) {
+        var guess = "example"
+        Log.d("RECEIVED", "$guess received from opponent")
+        //wait until guess: String is sent through socket.
+        performGuess(guess, steal)
+    }
+
+    private fun enableGuessing(steal: Boolean) {
+        answerET.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                hideKeyboard()
+                var guess = answerET.text.toString().toLowerCase()
+                answerET.text.clear()
+                this.performGuess(guess, steal)
+            }
+            true
+        }
+
+        answerET.text.clear()
+
+        guessBut.setOnClickListener {
+            hideKeyboard()
+            var guess = answerET.text.toString().toLowerCase()
+            answerET.text.clear()
+            this.performGuess(guess, steal)
+        }
+    }
+
+    private fun disableGuessing() {
         guessBut.setOnClickListener {
             answerET.text.clear()
             hideKeyboard()
         }
+
+        answerET.text.clear()
+
         answerET.setOnEditorActionListener { _, _, _ ->
             answerET.text.clear()
             hideKeyboard()
             true
         }
-        val newScore = Integer.parseInt(p1ScoreTV.text.toString()) + score
+    }
 
-        p1ScoreTV.text = "$newScore"
-        answers.forEachIndexed { index, _ ->
-            revealAnswer(index + 1)
-        }
+    private fun endGame(steal: Boolean) {
+        disableGuessing()
 
-        Timer("newRound", false).schedule(
-            object : TimerTask() {
-                override fun run() {
-                    activity!!.runOnUiThread{ playRound(randomForRound.nextInt(0, questionBank.size - 1)) }
+            if (steal) {
+                myTurn = !myTurn //Chance to steal
+                if (!myTurn) {
+                    //wait for other person's guess
+                    waitForOpponentGuess(true)
                 }
-            } , 6000)
+                else {
+                    enableGuessing(true)
+                    Toast.makeText(context, "Now's your chance to steal! Make a guess!", Toast.LENGTH_LONG).show()
+                }
+            }
+            else {
+                //actually end the game
+                if (singlePlayer) {
+                    player1RoundWinner = true
+                }
+                var newScore: Int
+                if (player1RoundWinner) {
+                    newScore = Integer.parseInt(p1ScoreTV.text.toString()) + score
+                    p1ScoreTV.text = "$newScore"
+                }
+                else {
+                    newScore = Integer.parseInt(p2ScoreTV.text.toString()) + score
+                    p2ScoreTV.text = "$newScore"
+                }
+
+
+                answers.forEachIndexed { index, _ ->
+                    revealAnswer(index + 1, true)
+                }
+
+                Timer("newRound", false).schedule(
+                    object : TimerTask() {
+                        override fun run() {
+                            activity!!.runOnUiThread{ playRound(randomForRound.nextInt(0, questionBank.size - 1)) }
+                        }
+                    } , 6000)
+            }
 
 
     }
 
-    private fun revealAnswer(index: Int) {
+    private fun revealAnswer(index: Int, steal: Boolean) {
         board[index - 1].text = String.format("${answers[index - 1]}: ${answerScores[index - 1]}")
-        score += answerScores[index - 1]
+        if (!steal)
+            score += answerScores[index - 1]
     }
 
     private fun hideKeyboard() {
@@ -269,8 +360,16 @@ class GameFragment : Fragment() {
     }
 
     companion object {
-        fun newInstance(): GameFragment {
-            return GameFragment()
+        private const val MY_TURN_BOOL_STRING = "myTurn"
+        private const val SINGLE_PLAYER_BOOL_STRING = "singlePlayer"
+        private const val PLAYER_ONE_BOOL_STRING = "playerOne"
+
+        fun newInstance(myTurn: Boolean, singlePlayer: Boolean, playerOne: Boolean) = GameFragment().apply {
+            arguments = Bundle(3).apply {
+                putBoolean(MY_TURN_BOOL_STRING, myTurn)
+                putBoolean(SINGLE_PLAYER_BOOL_STRING, singlePlayer)
+                putBoolean(PLAYER_ONE_BOOL_STRING, playerOne)
+            }
         }
     }
 
