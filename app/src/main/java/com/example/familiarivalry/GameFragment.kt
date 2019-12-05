@@ -127,7 +127,6 @@ class GameFragment : Fragment() {
                     playRound(randomForRound.nextInt(0, questionBank.size - 1))
                 }
             } , 5)
-//        playRound(randomForRound.nextInt(0, questionBank.size - 1))
         // Inflate the layout for this fragment
         return gameView
     }
@@ -187,11 +186,6 @@ class GameFragment : Fragment() {
                         activity!!.runOnUiThread{waitForOpponentGuess(steal = false)}
                     }
                 } , 5)
-            //In do strike not my turn:
-            //TV.text = "Opponent guess $answer is incorrect!"
-
-            //in waiting for the next guess
-            //TV.text = TV.text + " Waiting for opponent guess!"
         }
     }
 
@@ -203,7 +197,7 @@ class GameFragment : Fragment() {
             sendGuessToOtherDevice(guess)
 
         var guessSet = guess.split(" ").toHashSet()
-        //newlines not possible in this, and if they mess up their guess w other stuff oh well.
+        // Newlines not possible in this, and if they mess up their guess w other stuff oh well.
         var correctGuessNumber = -1
         val numWordsInGuess = guessSet.size
         for (i in 1..answerSets.size) {
@@ -249,6 +243,7 @@ class GameFragment : Fragment() {
                 }
                 else {
                     if (!myTurn) {
+                        //Game still going, gotta wait for next guess.
                         turnInfoTV.text = "Opponent guess was correct, waiting for next guess!"
                         Timer("waitForGuess", false).schedule(
                             object : TimerTask() {
@@ -256,7 +251,6 @@ class GameFragment : Fragment() {
                                     activity!!.runOnUiThread{waitForOpponentGuess(steal = false)}
                                 }
                             } , 5)
-//                        waitForOpponentGuess(false) //Game still going, gotta wait for next guess.
                     }
                 }
             }
@@ -279,7 +273,6 @@ class GameFragment : Fragment() {
                 Looper.prepare()
             }
             turnInfoTV.text = "Opponent guess $guess is incorrect!"
-//            Toast.makeText(context, "$guess is not correct!", Toast.LENGTH_LONG).show()
         }
         if (steal) {
             player1RoundWinner = (player1 && !myTurn) || (!player1 && myTurn)
@@ -299,7 +292,6 @@ class GameFragment : Fragment() {
             }
             else if (!myTurn) {
                 //Game is still going, wait for the next guess!
-//                waitForOpponentGuess(steal = false)
 
                 Timer("waitForGuess", false).schedule(
                     object : TimerTask() {
@@ -383,7 +375,6 @@ class GameFragment : Fragment() {
                                 activity!!.runOnUiThread{waitForOpponentGuess(steal = true)}
                             }
                         } , 5)
-//                    waitForOpponentGuess(true)
                 }
                 else {
                     enableGuessing(true)
@@ -391,7 +382,6 @@ class GameFragment : Fragment() {
                         Looper.prepare()
                     }
                     turnInfoTV.text = "${turnInfoTV.text} Now's your chance to steal, make a guess!"
-//                    Toast.makeText(context, "Now's your chance to steal! Make a guess!", Toast.LENGTH_LONG).show()
                 }
             }
             else {
