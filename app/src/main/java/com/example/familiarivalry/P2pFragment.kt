@@ -16,6 +16,12 @@ import java.util.*
 import java.net.*
 import android.os.StrictMode
 import android.widget.TextView
+import java.io.*
+import java.lang.System.out
+import android.system.Os.socket
+
+
+
 
 /**
  * A simple [Fragment] subclass.
@@ -52,113 +58,112 @@ class P2pFragment : Fragment() {
         // TODO CHANGE THIS!! PERF ISSUES
         val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
         StrictMode.setThreadPolicy(policy)
-        helper.setConnectInfoListener { address, isGroupOwner , groupFormed ->
-            Log.d("ASDF","ASDF")
-            Log.d("info", "========\nAddress:$address\nisGroupOwner:$isGroupOwner\ngroupFormed:$groupFormed\n========")
-            if(isGroupOwner != null && groupFormed) {
-                if(isGroupOwner) {
-                    //  we are the player 1!
-                    val server = ServerSocket(9981)
-
-                    println("Server running on port ${server.localPort}")
-                    println(server.localSocketAddress)
-                    val client = server.accept()
-                    println("Client connected : ${client.inetAddress.hostAddress}")
-                    // somehow waits for player 2 to connect and send a message
-                    val scanner = Scanner(client.inputStream)
-                    while (scanner.hasNextLine()) {
-                        p2pView.findViewById<TextView>(R.id.communicate).text = scanner.nextLine()
-                        break
+        helper.setConnectInfoListener { address, isGroupOwner, groupFormed ->
+            Log.d("ASDF", "ASDF")
+            Log.d(
+                "info",
+                "========\nAddress:$address\nisGroupOwner:$isGroupOwner\ngroupFormed:$groupFormed\n========"
+            )
+            if (isGroupOwner != null && groupFormed) {
+                if (isGroupOwner) {
+                    val server = ServerSocket(9876)
+                    while (true) {
+                        val socket = server.accept()
+                        println("client has accepted")
+                        val ois = ObjectInputStream(socket.getInputStream())
+                        val message = ois.readObject()
+                        println("server recieved: " + message)
+                        val oos = ObjectOutputStream(socket.getOutputStream())
+                        oos.writeObject("Hello client!")
+                        ois.close()
+                        oos.close()
+                        socket.close()
+                        //terminate the server if client sends exit request
+                        if (message.equals("exit")) break
                     }
-
-//                    client.outputStream.write("Hello from ur dad lol".toByteArray())
-//                    client.outputStream.flush()
-//                    client.getOutputStream().write("Response from the server!".toByteArray())
-//                    fragmentManager?.beginTransaction()
-//                        ?.addToBackStack("backToHomeFromSingle")
-//                        // We have the host as player 1.
-//                        ?.replace(R.id.main_frame, GameFragment.newInstance(myTurn = true, singlePlayer = false, playerOne = true))
-//                        ?.commit()
-
-                    server.close()
+                    println("Shutting down Socket server!!");
+                    //close the ServerSocket object
+                    server.close();
                 } else {
-                    // we are player 2!
-                    Log.d("192.168.49.1", address)
-                    Log.d("EQUIVALENT??", "192.168.49.1".equals(address).toString())
-                    val client = Socket(address, 9981)
-                    client.outputStream.write("Hello from the client!".toByteArray())
-                    client.outputStream.flush()
+                    println("starting socket")
+                    val socket = Socket(address, 9876)
+                    println("we got the socket connected")
+                    val oos = ObjectOutputStream(socket.getOutputStream())
+                    println("sending request to server!")
+                    oos.writeObject("hello from the client!")
+                    oos.writeObject("exit")
 
-                    // somehow waits for player 2 to connect and send a message
-//                    val scanner = Scanner(client.inputStream)
-//                    while (scanner.hasNextLine()) {
-//                        p2pView.findViewById<TextView>(R.id.communicate).text = scanner.nextLine()
-//                        break
-//                    }
-
-
-//                    val scanner = Scanner(client.getInputStream())
-//                    while (scanner.hasNextLine()) {
-//                        p2pView.findViewById<TextView>(R.id.communicate).text = scanner.nextLine()
-//                        break
-//                    }
-//                    fragmentManager?.beginTransaction()
-//                        ?.addToBackStack("backToHomeFromSingle")
-//                        // We have the host as player 1.
-//                        ?.replace(R.id.main_frame, GameFragment.newInstance(myTurn = false, singlePlayer = false, playerOne = false))
-//                        ?.commit()
-                    client.close()
+                    // reading
+                    println("reading")
+                    val ois = ObjectInputStream(socket.getInputStream())
+                    val message = ois.readObject() as String
+                    println("Message: $message")
+                    //close resources
+                    ois.close()
+                    oos.close()
+                    Thread.sleep(100)
                 }
             }
         }
-        helper.setConnectListener(object : WifiP2PHelper.ConnectListener{
+            helper.setConnectListener(object : WifiP2PHelper.ConnectListener {
 
-            override fun connectState(state: Boolean) {
-                Log.d("ASDF","CONNECTSTATE")
-                println("Connect State: $state")
-                if(state) {
-                    listView.adapter = ArrayAdapter<String>(context!!, android.R.layout.simple_expandable_list_item_1,
-                        java.util.ArrayList())
-                    helper.requestConnInfo()
-                    //if state is true, start game :)
+                override fun connectState(state: Boolean) {
+                    Log.d("ASDF", "CONNECTSTATE")
+                    println("Connect State: $state")
+                    if (state) {
+                        listView.adapter = ArrayAdapter<String>(
+                            context!!, android.R.layout.simple_expandable_list_item_1,
+                            java.util.ArrayList()
+                        )
+                        helper.requestConnInfo()
+                        //if state is true, start game :)
 
-                }
-            }
-
-            override fun connectDone(state: Boolean) {
-                Log.d("ASDF","CONNECTDONE")
-                println("Connect Done: $state")
-            }
-
-        })
-        helper.setPeerListener {
-            Log.d("ASDF","LISTENER")
-            if (it != null) {
-                devices = it
-                var names = mutableListOf<String>()
-                for (device in devices) {
-                    names.add(device.deviceName)
-                }
-                listView.adapter = ArrayAdapter<String>(context!!, android.R.layout.simple_expandable_list_item_1, names)
-            }
-            it.forEach({})
-        }
-        p2pView.findViewById<SwipeRefreshLayout>(R.id.refresh).setOnRefreshListener {
-            helper.startDiscovery()
-            Timer("stopRefresh", false).schedule(
-                object : TimerTask() {
-                    override fun run() {
-                        activity!!.runOnUiThread{ p2pView.findViewById<SwipeRefreshLayout>(R.id.refresh).isRefreshing = false }
                     }
-                } , 1000)
+                }
 
-        }
-        helper.easyStart()
-        helper.startDiscovery()
+                override fun connectDone(state: Boolean) {
+                    Log.d("ASDF", "CONNECTDONE")
+                    println("Connect Done: $state")
+                }
+
+            })
+
+            helper.setPeerListener {
+                Log.d("ASDF", "LISTENER")
+                if (it != null) {
+                    devices = it
+                    var names = mutableListOf<String>()
+                    for (device in devices) {
+                        names.add(device.deviceName)
+                    }
+                    listView.adapter = ArrayAdapter<String>(
+                        context!!,
+                        android.R.layout.simple_expandable_list_item_1,
+                        names
+                    )
+                }
+            }
+
+            p2pView.findViewById<SwipeRefreshLayout>(R.id.refresh).setOnRefreshListener {
+                helper.startDiscovery()
+                Timer("stopRefresh", false).schedule(
+                    object : TimerTask() {
+                        override fun run() {
+                            activity!!.runOnUiThread {
+                                p2pView.findViewById<SwipeRefreshLayout>(R.id.refresh)
+                                    .isRefreshing = false
+                            }
+                        }
+                    }, 1000)
+
+            }
+            helper.easyStart()
+            helper.startDiscovery()
 
 //        helper.requestConnInfo()
         return p2pView
     }
+
 
     fun getIpv4HostAddress(): String {
         NetworkInterface.getNetworkInterfaces()?.toList()?.map { networkInterface ->
