@@ -67,41 +67,50 @@ class P2pFragment : Fragment() {
             if (isGroupOwner != null && groupFormed) {
                 if (isGroupOwner) {
                     val server = ServerSocket(9876)
-                    while (true) {
+//                    while (true) {
                         val socket = server.accept()
                         println("client has accepted")
                         val ois = ObjectInputStream(socket.getInputStream())
-                        val message = ois.readObject()
-                        println("server recieved: " + message)
+//                        val message = ois.readObject()
+//                        println("server recieved: " + message)
                         val oos = ObjectOutputStream(socket.getOutputStream())
-                        oos.writeObject("Hello client!")
-                        ois.close()
-                        oos.close()
-                        socket.close()
-                        //terminate the server if client sends exit request
-                        if (message.equals("exit")) break
-                    }
-                    println("Shutting down Socket server!!");
-                    //close the ServerSocket object
-                    server.close();
+                        fragmentManager?.beginTransaction()
+                            ?.addToBackStack("backToHomeFromSingle")
+                            ?.replace(R.id.main_frame, GameFragment.newInstance(myTurn = true, singlePlayer = false, playerOne = true, ois = ois, oos = oos))
+                            ?.commit()
+//                        oos.writeObject("Hello client!")
+//                        ois.close()
+//                        oos.close()
+//                        socket.close()
+//                        //terminate the server if client sends exit request
+//                        if (message.equals("exit")) break
+//                    }
+//                    println("Shutting down Socket server!!");
+//                    //close the ServerSocket object
+//                    server.close();
                 } else {
                     println("starting socket")
                     val socket = Socket(address, 9876)
                     println("we got the socket connected")
                     val oos = ObjectOutputStream(socket.getOutputStream())
-                    println("sending request to server!")
-                    oos.writeObject("hello from the client!")
-                    oos.writeObject("exit")
+//                    println("sending request to server!")
+//                    oos.writeObject("hello from the client!")
+//                    oos.writeObject("exit")
+                    val ois = ObjectInputStream(socket.getInputStream())
+
+                    fragmentManager?.beginTransaction()
+                        ?.addToBackStack("backToHomeFromSingle")
+                        ?.replace(R.id.main_frame, GameFragment.newInstance(myTurn = false, singlePlayer = false, playerOne = false, ois = ois, oos = oos))
+                        ?.commit()
 
                     // reading
-                    println("reading")
-                    val ois = ObjectInputStream(socket.getInputStream())
-                    val message = ois.readObject() as String
-                    println("Message: $message")
-                    //close resources
-                    ois.close()
-                    oos.close()
-                    Thread.sleep(100)
+//                    println("reading")
+//                    val message = ois.readObject() as String
+//                    println("Message: $message")
+//                    //close resources
+//                    ois.close()
+//                    oos.close()
+//                    Thread.sleep(100)
                 }
             }
         }

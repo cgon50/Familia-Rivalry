@@ -2,6 +2,7 @@ package com.example.familiarivalry
 
 import android.media.MediaPlayer
 import android.os.Bundle
+import android.os.Looper
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -13,6 +14,8 @@ import android.widget.Toast
 import kotlin.random.Random
 import kotlinx.android.synthetic.main.fragment_game.*
 import party.liyin.easywifip2p.WifiP2PHelper
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
 import java.util.*
 import kotlin.math.min
 
@@ -47,6 +50,8 @@ class GameFragment : Fragment() {
     private var myTurn = true
     private var player1 = true
     private var player1RoundWinner = true
+    private lateinit var ois: ObjectInputStream
+    private lateinit var oos: ObjectOutputStream
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -119,10 +124,10 @@ class GameFragment : Fragment() {
         Timer("newRound", false).schedule(
             object : TimerTask() {
                 override fun run() {
-                    activity!!.runOnUiThread{ playRound(randomForRound.nextInt(0, questionBank.size - 1)) }
+                    playRound(randomForRound.nextInt(0, questionBank.size - 1))
                 }
             } , 5)
-
+//        playRound(randomForRound.nextInt(0, questionBank.size - 1))
         // Inflate the layout for this fragment
         return gameView
     }
@@ -169,11 +174,24 @@ class GameFragment : Fragment() {
         for (i in answers.size until board.size) {
             board[i].text = ""
         }
-        if (myTurn)
+        if (myTurn) {
+            turnInfoTV.text = "Your turn!"
             enableGuessing(steal = false)
+        }
         else {
+            turnInfoTV.text = "Waiting for opponent guess!"
             disableGuessing()
-            waitForOpponentGuess(steal = false)
+            Timer("waitForGuess", false).schedule(
+                object : TimerTask() {
+                    override fun run() {
+                        activity!!.runOnUiThread{waitForOpponentGuess(steal = false)}
+                    }
+                } , 5)
+            //In do strike not my turn:
+            //TV.text = "Opponent guess $answer is incorrect!"
+
+            //in waiting for the next guess
+            //TV.text = TV.text + " Waiting for opponent guess!"
         }
     }
 
@@ -211,13 +229,33 @@ class GameFragment : Fragment() {
                 revealAnswer(correctGuessNumber, steal)
                 if (steal) {
                     player1RoundWinner = (player1 && myTurn) || (!player1 && !myTurn)
+                    var textToShow = "You stole the points!"
+                    if (player1RoundWinner != player1) {
+                        textToShow = "Your opponent stole the points! Better luck next round!"
+                    }
+                    turnInfoTV.text = textToShow
                     endGame(false) // end the game for real, he stole it!
                 }
-                else if (numAnswersGuessed == answers.size)
+                else if (numAnswersGuessed == answers.size) {
+                    player1RoundWinner = (player1 && myTurn) || (!player1 && !myTurn)
+                    var textToShow = "You swept the board!"
+                    if (player1RoundWinner != player1) {
+                        textToShow = "Your opponent swept the board! Better luck next round!"
+                    }
+                    turnInfoTV.text = textToShow
                     endGame(steal = false) //no chance to steal
+                }
                 else {
-                    if (!myTurn)
-                        waitForOpponentGuess(false) //Game still going, gotta wait for next guess.
+                    if (!myTurn) {
+                        turnInfoTV.text = "Opponent guess was correct, waiting for next guess!"
+                        Timer("waitForGuess", false).schedule(
+                            object : TimerTask() {
+                                override fun run() {
+                                    activity!!.runOnUiThread{waitForOpponentGuess(steal = false)}
+                                }
+                            } , 5)
+//                        waitForOpponentGuess(false) //Game still going, gotta wait for next guess.
+                    }
                 }
             }
             else
@@ -235,11 +273,20 @@ class GameFragment : Fragment() {
         }
         if (!myTurn) {
             //Let the waiting player know of the wrong guess
-            Toast.makeText(context, "$guess is not correct!", Toast.LENGTH_LONG).show()
+            if (Looper.myLooper() == null) {
+                Looper.prepare()
+            }
+            turnInfoTV.text = "Opponent guess $guess is incorrect!"
+//            Toast.makeText(context, "$guess is not correct!", Toast.LENGTH_LONG).show()
         }
         if (steal) {
             player1RoundWinner = (player1 && !myTurn) || (!player1 && myTurn)
             myTurn = !myTurn // winner goes first next round.
+            var textToShow = "You did not steal the points, better luck next round!"
+            if (player1RoundWinner == player1) {
+                textToShow = "Your opponent did not steal the points! You win this round!"
+            }
+            turnInfoTV.text = textToShow
             endGame(steal = false)
         }
         else {
@@ -250,20 +297,35 @@ class GameFragment : Fragment() {
             }
             else if (!myTurn) {
                 //Game is still going, wait for the next guess!
-                waitForOpponentGuess(steal = false)
+//                waitForOpponentGuess(steal = false)
+
+                Timer("waitForGuess", false).schedule(
+                    object : TimerTask() {
+                        override fun run() {
+                            activity!!.runOnUiThread{waitForOpponentGuess(steal = false)}
+                        }
+                    } , 5)
             }
         }
 
     }
 
-    fun sendGuessToOtherDevice(guess: String) {
+    private fun sendGuessToOtherDevice(guess: String) {
         //logic to send message to other device
+        oos.writeObject(guess)
         Log.d("SENT", "$guess sent to opponent")
     }
 
-    fun waitForOpponentGuess(steal: Boolean) {
+    private fun waitForOpponentGuess(steal: Boolean) {
         var guess = "example"
         Log.d("RECEIVED", "$guess received from opponent")
+        hideKeyboard()
+        turnInfoTV.text = "${turnInfoTV.text} Waiting for opponent's guess!"
+        while (true) {
+            guess = ois.readObject() as String
+            break
+        }
+
         //wait until guess: String is sent through socket.
         performGuess(guess, steal)
     }
@@ -311,11 +373,21 @@ class GameFragment : Fragment() {
                 myTurn = !myTurn //Chance to steal
                 if (!myTurn) {
                     //wait for other person's guess
-                    waitForOpponentGuess(true)
+                    Timer("waitForGuess", false).schedule(
+                        object : TimerTask() {
+                            override fun run() {
+                                activity!!.runOnUiThread{waitForOpponentGuess(steal = true)}
+                            }
+                        } , 5)
+//                    waitForOpponentGuess(true)
                 }
                 else {
                     enableGuessing(true)
-                    Toast.makeText(context, "Now's your chance to steal! Make a guess!", Toast.LENGTH_LONG).show()
+                    if (Looper.myLooper() == null) {
+                        Looper.prepare()
+                    }
+                    turnInfoTV.text = "${turnInfoTV.text} Now's your chance to steal, make a guess!"
+//                    Toast.makeText(context, "Now's your chance to steal! Make a guess!", Toast.LENGTH_LONG).show()
                 }
             }
             else {
@@ -364,12 +436,20 @@ class GameFragment : Fragment() {
         private const val SINGLE_PLAYER_BOOL_STRING = "singlePlayer"
         private const val PLAYER_ONE_BOOL_STRING = "playerOne"
 
-        fun newInstance(myTurn: Boolean, singlePlayer: Boolean, playerOne: Boolean) = GameFragment().apply {
+        fun newInstance(myTurn: Boolean, singlePlayer: Boolean, playerOne: Boolean,
+                        ois: ObjectInputStream?, oos: ObjectOutputStream?) = GameFragment().apply {
             arguments = Bundle(3).apply {
                 putBoolean(MY_TURN_BOOL_STRING, myTurn)
                 putBoolean(SINGLE_PLAYER_BOOL_STRING, singlePlayer)
                 putBoolean(PLAYER_ONE_BOOL_STRING, playerOne)
             }
+            this.myTurn = myTurn
+            this.singlePlayer = singlePlayer
+            this.player1 = playerOne
+            if (ois != null)
+                this.ois = ois
+            if (oos != null)
+                this.oos = oos
         }
     }
 
