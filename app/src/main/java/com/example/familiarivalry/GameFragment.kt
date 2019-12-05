@@ -223,6 +223,8 @@ class GameFragment : Fragment() {
             doStrike(guess, steal)
         }
         else {
+            player = MediaPlayer.create(context, R.raw.right_answer_ding)
+            player.start()
             if (answersGuessed[correctGuessNumber - 1] == 0) {
                 answersGuessed[correctGuessNumber - 1] = 1
                 numAnswersGuessed++
@@ -265,11 +267,11 @@ class GameFragment : Fragment() {
     }
 
     private fun doStrike(guess: String, steal: Boolean) {
+        player = MediaPlayer.create(context, R.raw.wrong_answer_buzzer)
         player.start()
         player.setOnCompletionListener {
             player.stop()
             player.reset()
-            player = MediaPlayer.create(context, R.raw.wrong_answer_buzzer)
         }
         if (!myTurn) {
             //Let the waiting player know of the wrong guess
@@ -336,6 +338,7 @@ class GameFragment : Fragment() {
                 hideKeyboard()
                 var guess = answerET.text.toString().toLowerCase()
                 answerET.text.clear()
+                hideKeyboard()
                 this.performGuess(guess, steal)
             }
             true
@@ -347,6 +350,7 @@ class GameFragment : Fragment() {
             hideKeyboard()
             var guess = answerET.text.toString().toLowerCase()
             answerET.text.clear()
+            hideKeyboard()
             this.performGuess(guess, steal)
         }
     }

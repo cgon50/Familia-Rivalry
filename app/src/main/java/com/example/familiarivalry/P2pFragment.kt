@@ -1,5 +1,6 @@
 package com.example.familiarivalry
 
+import android.media.MediaPlayer
 import android.net.wifi.p2p.WifiP2pDevice
 import android.os.Bundle
 import android.util.Log
@@ -46,6 +47,7 @@ class P2pFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
+        MediaPlayer.create(context, R.raw.theme_song).start()
         var p2pView = inflater.inflate(R.layout.fragment_p2p, container, false)
         Log.d("ASDF","CREATION")
         helper = WifiP2PHelper(context)
