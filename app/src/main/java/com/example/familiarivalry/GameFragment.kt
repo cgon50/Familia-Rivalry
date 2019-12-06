@@ -217,9 +217,9 @@ class GameFragment : Fragment() {
             doStrike(guess, steal)
         }
         else {
-            player = MediaPlayer.create(context, R.raw.right_answer_ding)
-            player.start()
             if (answersGuessed[correctGuessNumber - 1] == 0) {
+                player = MediaPlayer.create(context, R.raw.right_answer_ding)
+                player.start()
                 answersGuessed[correctGuessNumber - 1] = 1
                 numAnswersGuessed++
                 revealAnswer(correctGuessNumber, steal)
